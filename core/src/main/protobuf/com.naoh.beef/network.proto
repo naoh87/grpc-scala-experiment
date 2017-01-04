@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option java_package = "com.naoh.beef.proto";
+
+
+message ServerLocation {
+    string region = 1;
+    string ref = 2;
+}
+
+message RequestChannel {
+    string region = 1;
+}
+
+message ServerChannel {
+    ServerLocation server = 1;
+    string ref = 2;
+}
+
+message ServerJoin {
+    ServerLocation server = 1;
+}
+
+message ServerLeave {
+    ServerLocation server = 1;
+}

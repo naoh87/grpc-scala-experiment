@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+option java_package = "com.naoh.beef.proto";
+
+message Start {
+    string path = 1;
+    string ref = 2;
+}
+message NotFound {
+    string path = 1;
+}
+
+message Cancel {
+    int32 status = 1;
+}
+
+message Header {
+    repeated bytes meta = 1;
+}
+
+message HalfClose {
+    int32 index = 1;
+}
+
+message OnComplete {
+    int32 index = 1;
+    int32 status = 2;
+    repeated bytes trailers = 3;
+}
+
+message Request {
+    bytes payload = 1;
+    int32 index = 2;
+}
+
+message Response {
+    bytes payload = 1;
+    int32 index = 2;
+}

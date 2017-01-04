@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option java_package = "com.naoh.beef.proto";
+
+message EchoReq {
+    string say = 1;
+}
+
+message EchoRes {
+    string said = 1;
+}
+
+service Echo {
+    rpc RetEcho (EchoReq) returns (EchoRes) {}
+}
