@@ -1,4 +1,4 @@
-activator-akka-scala-seed
+Grpc over akka remote experiment
 =========================
 
-A minimal seed template for an Akka with Scala build 
+This implements is x2 slower than Netty one

@@ -3,6 +3,10 @@ lazy val commonSettings = Seq(
   version := "0.1.0",
   scalaVersion := "2.11.8"
 )
+val akka = "2.4.16"
+val scalatest = "3.0.1"
+val grpc = "1.0.1"
+val common_io = "2.5"
 
 lazy val root = (project in file(".")).
   aggregate(core, benchmark).
@@ -13,10 +17,6 @@ lazy val core = (project in file("core"))
   .settings(name:= "beef")
   .settings(
     libraryDependencies ++= {
-      val akka = "2.4.16"
-      val scalatest = "3.0.1"
-      val grpc = "1.0.1"
-      val common_io = "2.5"
       Seq(
         "com.typesafe.akka" %% "akka-actor" % akka,
         "com.typesafe.akka" %% "akka-agent" % akka,
@@ -25,7 +25,6 @@ lazy val core = (project in file("core"))
         "com.typesafe.akka" %% "akka-testkit" % akka % "test",
 
         "io.grpc" % "grpc-core" % grpc,
-        "commons-io" % "commons-io" % common_io,
 
         "com.trueaccord.scalapb" %% "scalapb-runtime" % com.trueaccord.scalapb.compiler.Version.scalapbVersion % "protobuf",
         "com.trueaccord.scalapb" %% "scalapb-runtime-grpc" % com.trueaccord.scalapb.compiler.Version.scalapbVersion,
@@ -41,7 +40,14 @@ lazy val core = (project in file("core"))
 
 lazy val benchmark = (project in file("benchmark"))
   .settings(commonSettings: _*)
-  .dependsOn(core % "compile->compile")
+  .settings(
+    libraryDependencies ++= {
+      Seq(
+        "io.grpc" % "grpc-netty" % grpc
+      )
+    }
+  )
   .settings(
     PB.targets in Compile := Seq(scalapb.gen() -> (sourceManaged in Compile).value)
   )
+  .dependsOn(core % "compile->compile")
