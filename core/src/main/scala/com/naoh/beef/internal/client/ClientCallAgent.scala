@@ -2,8 +2,12 @@ package com.naoh.beef.internal.client
 
 import akka.actor.Actor
 import akka.actor.ActorRef
+import akka.actor.OneForOneStrategy
 import akka.actor.Props
+import akka.actor.SupervisorStrategy
+import akka.actor.SupervisorStrategy.Stop
 import com.naoh.beef.Region
+import com.naoh.beef.internal.Network
 import com.naoh.beef.internal.Network.Open
 import com.naoh.beef.internal.Network.ProtoRequest
 import com.naoh.beef.internal.Network.SerializedActorRef
@@ -52,6 +56,8 @@ object ClientCallAgent {
 
   case class RequestStart[ResT](method: String, responseListener: Listener[ResT])
 
+  case object End
+
 }
 
 class ClientCallAgent[ReqT, ResT](
@@ -63,24 +69,41 @@ class ClientCallAgent[ReqT, ResT](
   var listener: ActorRef = _
   var remote: ActorRef = _
 
+
+  override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy() {
+    case _ => Stop
+  }
+
   override def receive: Receive = {
     case msg@RequestStart(method, handler) =>
+      println("CC: RqStart")
       this.listener = context.actorOf(ClientCallListenerActor.props(methodDescriptor, handler.asInstanceOf[Listener[ResT]]), "listener")
       transport ! Open(region.name)
       queue << ps.Start(method, SerializedActorRef(this.listener))
     case msg@ServerChannel(ref, serer) =>
+      println(s"CC: Recv $msg")
       this.remote = ref
       context become online
       queue.polls(online.lift)
+    case msg@Network.NotFound(name) =>
+      println(s"CC: NotFound $msg")
+      listener ! msg
+    case ClientCallAgent.End =>
+      context stop self
     case msg =>
+      println(s"CC: queue $msg")
       queue << msg
   }
 
   def online: Receive = {
     case msg: ps.HalfClose =>
       this.remote ! msg
+    case ClientCallAgent.End =>
+      context stop self
       transport ! remote
     case msg =>
       this.remote ! msg
   }
 }
+
+

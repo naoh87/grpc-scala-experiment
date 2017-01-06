@@ -1,5 +1,5 @@
 lazy val commonSettings = Seq(
-  organization := "com.naoh",
+  organization := "com.github.naoh87",
   version := "0.1.0",
   scalaVersion := "2.11.8"
 )
@@ -21,9 +21,10 @@ lazy val core = (project in file("core"))
         "com.typesafe.akka" %% "akka-actor" % akka,
         "com.typesafe.akka" %% "akka-agent" % akka,
         "com.typesafe.akka" %% "akka-cluster" % akka,
+        "com.typesafe.akka" %% "akka-cluster-tools" % akka,
         "com.typesafe.akka" %% "akka-testkit" % akka % "test",
 
-        "io.grpc" % "grpc-core" % "1.0.1",
+        "io.grpc" % "grpc-core" % grpc,
         "commons-io" % "commons-io" % common_io,
 
         "com.trueaccord.scalapb" %% "scalapb-runtime" % com.trueaccord.scalapb.compiler.Version.scalapbVersion % "protobuf",
@@ -33,7 +34,8 @@ lazy val core = (project in file("core"))
       )
     }
   ).settings(
-    PB.targets in Compile := Seq(scalapb.gen() -> (sourceManaged in Compile).value)
+    PB.targets in Compile := Seq(scalapb.gen() -> (sourceManaged in Compile).value),
+    publishTo := Some(Resolver.file("file",  new File( "releases" )) )
   )
 
 

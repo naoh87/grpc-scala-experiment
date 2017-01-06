@@ -1,10 +1,14 @@
 package com.naoh.beef
 
+import java.time.Instant
+
 import akka.actor.ExtendedActorSystem
 import akka.actor.Extension
 import akka.actor.ExtensionId
 import akka.actor.ExtensionIdProvider
 import com.naoh.beef.internal.Network
+import com.naoh.beef.internal.Network.Open
+import com.naoh.beef.internal.Network.Prepare
 import com.naoh.beef.internal.client.BeefStubBuilder
 import com.naoh.beef.internal.server.ServerActor
 import io.grpc.ServerMethodDefinition
@@ -16,6 +20,7 @@ import scala.concurrent.ExecutionContextExecutor
 
 
 class Beef(val system: ExtendedActorSystem) extends Extension {
+  println(s"Initialize Beef${println(Instant.now)}")
   val network = system.actorOf(Network.props, "beef-network")
 
   def apply(builder: ServerBuilder): Beef = {
@@ -24,7 +29,10 @@ class Beef(val system: ExtendedActorSystem) extends Extension {
     this
   }
 
-  def provideBuilder(client: Client): StubBuilder = new BeefStubBuilder(client, this)
+  def provideBuilder(client: Client): StubBuilder = {
+    network ! Prepare(client.region)
+    new BeefStubBuilder(client, this)
+  }
 }
 
 object Beef extends ExtensionId[Beef] with ExtensionIdProvider {
@@ -63,7 +71,7 @@ case class ServerBuilder(
 }
 
 object Server {
-  def apply(name: String): ServerBuilder = ServerBuilder(Region(name))
+  def apply(region: Region): ServerBuilder = ServerBuilder(region)
 }
 
 case class Auth(value: String)

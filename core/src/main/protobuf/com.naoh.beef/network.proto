@@ -2,6 +2,9 @@ syntax = "proto3";
 
 option java_package = "com.naoh.beef.proto";
 
+message ServerFetch {
+    string ref = 1;
+}
 
 message ServerLocation {
     string region = 1;

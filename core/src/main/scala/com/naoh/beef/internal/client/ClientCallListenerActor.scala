@@ -2,6 +2,7 @@ package com.naoh.beef.internal.client
 
 import akka.actor.Actor
 import akka.actor.Props
+import com.naoh.beef.internal.Network
 import com.naoh.beef.internal.Network.ProtoHeader
 import com.naoh.beef.internal.Network.ProtoOnComplete
 import com.naoh.beef.proto.{stream => ps}
@@ -33,9 +34,15 @@ class ClientCallListenerActor[ReqT, ResT](
       handler.onHeaders(meta)
     case msg@ProtoOnComplete(status, trailers, index) =>
       handler.onClose(status, trailers)
+      context.parent ! ClientCallAgent.End
+      context stop self
+    case Network.NotFound(name) =>
+      handler.onClose(Status.NOT_FOUND, new Metadata())
+      context.parent ! ClientCallAgent.End
       context stop self
     case uk =>
       handler.onClose(Status.UNKNOWN, new Metadata())
+      context.parent ! ClientCallAgent.End
       context stop self
   }
 }
