@@ -4,6 +4,7 @@ import java.time.Duration
 import java.time.Instant
 
 import akka.actor.Actor
+import akka.actor.ActorLogging
 import akka.actor.ActorRef
 import akka.actor.Props
 import akka.cluster.Cluster
@@ -14,9 +15,10 @@ import akka.cluster.pubsub.DistributedPubSubMediator.SubscribeAck
 import akka.serialization.SerializationExtension
 import com.naoh.beef.internal.Network.ServerLocation
 import com.naoh.beef.proto.{network => pn}
+
 import scala.collection.JavaConverters._
 
-class ServerSelectorActor(name: String) extends Actor {
+class ServerSelectorActor(name: String) extends Actor with ActorLogging {
 
   import Network._
 
@@ -28,8 +30,10 @@ class ServerSelectorActor(name: String) extends Actor {
 
   val serverMode = Cluster(context.system).getSelfRoles.asScala.contains("server")
   if(serverMode){
-    println(s"\nAs Server ${SerializedActorRef(self)}")
+    log.info(s"\nAs Server ${SerializedActorRef(self)}")
     mediator ! Subscribe(serverTopic, self)
+  } else {
+    log.info(s"\nAs Client ${SerializedActorRef(self)}")
   }
 
   @volatile
@@ -47,31 +51,23 @@ class ServerSelectorActor(name: String) extends Actor {
 
   override def receive: Receive = {
     case ServerSelectorActor.Find(`name`) =>
-      println(s"[$timestamp] find $rounds")
-      shuffle.getOrElse {
-        mediator ! Publish(name, pn.ServerFetch(SerializedActorRef(self)))
-      }
       sender() ! shuffle.getOrElse(NotFound(name))
     case ServerSelectorActor.Add(server) =>
       locals = locals + server
       reallocate()
-      println(s"[$timestamp] add $server, $rounds")
       mediator ! Publish(name, ProtoServerJoin(server))
     case ProtoServerJoin(server) =>
       if (server.region.name == name){
         servers += server
         reallocate()
       }
-      println(s"[$timestamp] join $server, $rounds")
     case ProtoServerLeft(server) =>
-      println(s"[$timestamp] leave")
       servers -= server
       reallocate()
-    case SubscribeAck(Subscribe(`name`, None, _)) =>
-      println(s"[$timestamp] ACK")
+    case SubscribeAck(Subscribe(topic, None, _)) =>
+      locals.foreach(location => mediator ! ProtoServerJoin(location))
       mediator ! Publish(serverTopic, pn.ServerFetch(SerializedActorRef(self)))
     case pn.ServerFetch(SerializedActorRef(ref)) if locals.nonEmpty && ref != self =>
-      println(s"[$timestamp] FETCH $locals $ref")
       locals.foreach(location => ref ! ProtoServerJoin(location))
   }
 

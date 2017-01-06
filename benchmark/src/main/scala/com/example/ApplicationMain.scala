@@ -1,5 +1,7 @@
 package com.example
 
+import java.time.Instant
+import java.time.{Duration => jDuration}
 import java.util.concurrent.Executors
 
 import akka.actor.ActorSystem
@@ -47,6 +49,10 @@ object ApplicationMain extends App {
   println(s"\n\n>> ${Try(client.retEcho(EchoReq("hoovar")))}\n\n")
   Thread.sleep(1000)
   println(s"\n\n>> ${Try(client.retEcho(EchoReq("12345")))}\n\n")
+
+  val base = Instant.now
+  Iterator.range(0, 10000).toSeq.toParArray.foreach(_ => Try(client.retEcho(EchoReq("12"))))
+  println(s"Duration ${jDuration.between(base, Instant.now())}")
 
   Thread.sleep(2000)
   clientCtx.shutdown()

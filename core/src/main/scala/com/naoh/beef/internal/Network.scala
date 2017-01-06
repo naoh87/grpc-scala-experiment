@@ -105,10 +105,7 @@ object Network {
 
   object SerializedActorRef {
     def apply(actorRef: ActorRef): String = {
-
-      val ref = Serialization.serializedActorPath(actorRef)
-      println(s">>Serizlied $ref")
-      ref
+      Serialization.serializedActorPath(actorRef)
     }
 
     def unapply(ref: String)(implicit context: ActorContext): Option[ActorRef] =

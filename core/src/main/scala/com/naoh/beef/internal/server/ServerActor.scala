@@ -25,6 +25,7 @@ class ServerActor(
   val locationProto = location.toProto
   Beef(context.system).network ! ServerSelectorActor.Add(location)
 
+  println("Server Actor Start")
   var created = 0
 
   override def receive: Receive = {
